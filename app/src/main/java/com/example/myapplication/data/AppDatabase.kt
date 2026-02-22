@@ -8,7 +8,7 @@ import kotlinx.coroutines.flow.Flow
 data class Note(
     @PrimaryKey(autoGenerate = true) val id: Int = 0,
     val title: String,
-    val content: String, // Nouveau : pour le texte de la note
+    val content: String,
     val date: String
 )
 
@@ -18,18 +18,18 @@ interface NoteDao {
     @Query("SELECT * FROM notes ORDER BY id DESC")
     fun getAllNotes(): Flow<List<Note>>
 
-    @Insert
+    // ✅ CORRECTION : OnConflictStrategy.REPLACE permet l'insert ET l'update avec le même appel
+    @Insert(onConflict = OnConflictStrategy.REPLACE)
     suspend fun insert(note: Note)
 
     @Delete
-    suspend fun delete(note: Note) // AJOUTE CETTE LIGNE
+    suspend fun delete(note: Note)
 }
 
 // 3. La base de données
-// Change version à 3
 @Database(entities = [Note::class, Goal::class, Mood::class], version = 3)
 abstract class AppDatabase : RoomDatabase() {
     abstract fun noteDao(): NoteDao
     abstract fun goalDao(): GoalDao
-    abstract fun moodDao(): MoodDao // Ajoute ceci
+    abstract fun moodDao(): MoodDao
 }

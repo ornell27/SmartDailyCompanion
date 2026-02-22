@@ -19,53 +19,72 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.example.myapplication.data.Goal
 import com.example.myapplication.data.GoalDao
+import com.example.myapplication.data.LanguageManager
+import com.example.myapplication.data.Strings
 import com.example.myapplication.ui.theme.BackgroundGray
+import com.example.myapplication.ui.theme.DarkBackground
+import com.example.myapplication.ui.theme.DarkSurface
+import com.example.myapplication.ui.theme.DarkTextSecondary
 import com.example.myapplication.ui.theme.PurpleMain
 import kotlinx.coroutines.launch
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
-fun GoalsScreen(goalDao: GoalDao, onBack: () -> Unit) {
-    // 1. Récupération des objectifs en temps réel
+fun GoalsScreen(
+    goalDao: GoalDao,
+    isDarkMode: Boolean,   // ✅ paramètre ajouté
+    onBack: () -> Unit
+) {
     val goals by goalDao.getAllGoals().collectAsState(initial = emptyList())
     val scope = rememberCoroutineScope()
+    val lang by LanguageManager.currentLanguage
 
-    // État pour le nouveau texte de l'objectif
     var newGoalTitle by remember { mutableStateOf("") }
 
-    // --- CALCUL DE LA PROGRESSION ---
+    // ✅ Couleurs dynamiques selon le thème
+    val bgColor       = if (isDarkMode) DarkBackground else BackgroundGray
+    val cardColor     = if (isDarkMode) DarkSurface    else Color.White
+    val textColor     = if (isDarkMode) Color.White    else Color.Black
+    val secondaryText = if (isDarkMode) DarkTextSecondary else Color.Gray
+    val textFieldText = if (isDarkMode) Color.White    else Color.Black
+    val borderColor   = if (isDarkMode) Color(0xFF555555) else Color.LightGray
+
     val progress = if (goals.isNotEmpty()) {
         goals.count { it.isCompleted }.toFloat() / goals.size
-    } else {
-        0f
-    }
+    } else 0f
 
     Scaffold(
         topBar = {
             TopAppBar(
-                title = { Text("Daily Goals", fontWeight = FontWeight.Bold) },
+                title = { Text(Strings.dailyGoals, fontWeight = FontWeight.Bold) },
                 navigationIcon = {
                     IconButton(onClick = onBack) {
                         Icon(Icons.Default.ArrowBack, contentDescription = "Back")
                     }
-                }
+                },
+                colors = TopAppBarDefaults.topAppBarColors(
+                    containerColor = PurpleMain,
+                    titleContentColor = Color.White,
+                    navigationIconContentColor = Color.White
+                )
             )
-        }
+        },
+        containerColor = bgColor  // ✅ fond du Scaffold aussi en mode sombre
     ) { padding ->
         Column(
             modifier = Modifier
                 .fillMaxSize()
                 .padding(padding)
-                .background(BackgroundGray)
+                .background(bgColor)
                 .padding(20.dp)
         ) {
-            // --- NOUVELLE SECTION : BARRE DE PROGRESSION ---
+            // --- BARRE DE PROGRESSION ---
             Card(
                 modifier = Modifier
                     .fillMaxWidth()
                     .padding(bottom = 20.dp),
                 shape = RoundedCornerShape(16.dp),
-                colors = CardDefaults.cardColors(containerColor = Color.White)
+                colors = CardDefaults.cardColors(containerColor = cardColor) // ✅
             ) {
                 Column(modifier = Modifier.padding(16.dp)) {
                     Row(
@@ -73,7 +92,12 @@ fun GoalsScreen(goalDao: GoalDao, onBack: () -> Unit) {
                         horizontalArrangement = Arrangement.SpaceBetween,
                         verticalAlignment = Alignment.CenterVertically
                     ) {
-                        Text("Task Completion", fontWeight = FontWeight.Bold, fontSize = 16.sp)
+                        Text(
+                            Strings.taskCompletion,
+                            fontWeight = FontWeight.Bold,
+                            fontSize = 16.sp,
+                            color = textColor  // ✅
+                        )
                         Text(
                             text = "${(progress * 100).toInt()}%",
                             color = PurpleMain,
@@ -83,39 +107,46 @@ fun GoalsScreen(goalDao: GoalDao, onBack: () -> Unit) {
                     Spacer(modifier = Modifier.height(10.dp))
                     LinearProgressIndicator(
                         progress = { progress },
-                        modifier = Modifier
-                            .fillMaxWidth()
-                            .height(10.dp),
+                        modifier = Modifier.fillMaxWidth().height(10.dp),
                         color = PurpleMain,
-                        trackColor = PurpleMain.copy(alpha = 0.1f),
+                        trackColor = PurpleMain.copy(alpha = 0.2f),
                         strokeCap = StrokeCap.Round
                     )
                 }
             }
 
-            // --- SECTION AJOUT RAPIDE ---
+            // --- AJOUT RAPIDE ---
             Card(
                 modifier = Modifier.fillMaxWidth(),
                 shape = RoundedCornerShape(16.dp),
-                colors = CardDefaults.cardColors(containerColor = Color.White)
+                colors = CardDefaults.cardColors(containerColor = cardColor) // ✅
             ) {
                 Row(
                     modifier = Modifier.padding(8.dp),
                     verticalAlignment = Alignment.CenterVertically
                 ) {
-                    TextField(
+                    OutlinedTextField(
                         value = newGoalTitle,
                         onValueChange = { newGoalTitle = it },
-                        placeholder = { Text("Add a new goal...") },
+                        placeholder = {
+                            Text(Strings.addGoalHint, color = secondaryText) // ✅
+                        },
                         modifier = Modifier.weight(1f),
-                        colors = TextFieldDefaults.colors(
+                        singleLine = true,
+                        colors = OutlinedTextFieldDefaults.colors(
+                            focusedTextColor = textFieldText,        // ✅ texte visible
+                            unfocusedTextColor = textFieldText,      // ✅ texte visible
                             focusedContainerColor = Color.Transparent,
                             unfocusedContainerColor = Color.Transparent,
-                            disabledContainerColor = Color.Transparent,
-                            focusedIndicatorColor = Color.Transparent,
-                            unfocusedIndicatorColor = Color.Transparent
-                        )
+                            focusedBorderColor = PurpleMain,
+                            unfocusedBorderColor = borderColor,      // ✅ bordure adaptée
+                            cursorColor = PurpleMain
+                        ),
+                        shape = RoundedCornerShape(12.dp)
                     )
+
+                    Spacer(modifier = Modifier.width(8.dp))
+
                     Button(
                         onClick = {
                             if (newGoalTitle.isNotBlank()) {
@@ -128,18 +159,18 @@ fun GoalsScreen(goalDao: GoalDao, onBack: () -> Unit) {
                         shape = RoundedCornerShape(12.dp),
                         colors = ButtonDefaults.buttonColors(containerColor = PurpleMain)
                     ) {
-                        Text("Add")
+                        Text(Strings.add, color = Color.White)
                     }
                 }
             }
 
             Spacer(modifier = Modifier.height(24.dp))
 
-            // --- LISTE DES OBJECTIFS ---
             Text(
-                text = "Your Tasks",
+                text = Strings.yourTasks,
                 fontSize = 18.sp,
                 fontWeight = FontWeight.Bold,
+                color = textColor,  // ✅
                 modifier = Modifier.padding(bottom = 12.dp)
             )
 
@@ -150,6 +181,7 @@ fun GoalsScreen(goalDao: GoalDao, onBack: () -> Unit) {
                 items(goals) { goal ->
                     GoalItem(
                         goal = goal,
+                        isDarkMode = isDarkMode,  // ✅
                         onToggle = { isChecked ->
                             scope.launch {
                                 goalDao.insertGoal(goal.copy(isCompleted = isChecked))
@@ -166,31 +198,39 @@ fun GoalsScreen(goalDao: GoalDao, onBack: () -> Unit) {
 }
 
 @Composable
-fun GoalItem(goal: Goal, onToggle: (Boolean) -> Unit, onDelete: () -> Unit) {
+fun GoalItem(
+    goal: Goal,
+    isDarkMode: Boolean,  // ✅
+    onToggle: (Boolean) -> Unit,
+    onDelete: () -> Unit
+) {
+    val cardColor = if (isDarkMode) DarkSurface else Color.White
+    val textColor = if (isDarkMode) Color.White else Color.Black
+    val doneColor = if (isDarkMode) Color(0xFF888888) else Color.Gray
+
     Card(
         modifier = Modifier.fillMaxWidth(),
         shape = RoundedCornerShape(12.dp),
-        colors = CardDefaults.cardColors(containerColor = Color.White)
+        colors = CardDefaults.cardColors(containerColor = cardColor) // ✅
     ) {
         Row(
-            modifier = Modifier
-                .padding(12.dp)
-                .fillMaxWidth(),
+            modifier = Modifier.padding(12.dp).fillMaxWidth(),
             verticalAlignment = Alignment.CenterVertically
         ) {
             Checkbox(
                 checked = goal.isCompleted,
                 onCheckedChange = onToggle,
-                colors = CheckboxDefaults.colors(checkedColor = PurpleMain)
+                colors = CheckboxDefaults.colors(
+                    checkedColor = PurpleMain,
+                    uncheckedColor = if (isDarkMode) Color(0xFFAAAAAA) else Color.Gray  // ✅
+                )
             )
-
             Text(
                 text = goal.title,
                 modifier = Modifier.weight(1f),
                 style = MaterialTheme.typography.bodyLarge,
-                color = if (goal.isCompleted) Color.Gray else Color.Black
+                color = if (goal.isCompleted) doneColor else textColor  // ✅
             )
-
             IconButton(onClick = onDelete) {
                 Icon(
                     imageVector = Icons.Default.Delete,

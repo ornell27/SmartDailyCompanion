@@ -1,4 +1,5 @@
 package com.example.myapplication.ui.components
+
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
@@ -12,17 +13,20 @@ import androidx.compose.ui.text.font.FontStyle
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import com.example.myapplication.data.LanguageManager
 import com.example.myapplication.data.QuotesProvider
+import com.example.myapplication.data.Strings
 
 @Composable
 fun MotivationCard() {
-    // État pour la citation actuelle
-    var currentQuote by remember { mutableStateOf(QuotesProvider.getRandomQuote()) }
+    val lang by LanguageManager.currentLanguage
+    // ✅ La citation se recharge automatiquement quand la langue change
+    var currentQuote by remember(lang) { mutableStateOf(QuotesProvider.getRandomQuote()) }
 
     Card(
         modifier = Modifier
             .fillMaxWidth()
-            .padding(horizontal = 24.dp, vertical = 8.dp),
+            .padding(vertical = 8.dp),
         shape = RoundedCornerShape(20.dp),
         colors = CardDefaults.cardColors(containerColor = Color.White),
         elevation = CardDefaults.cardElevation(4.dp)
@@ -32,7 +36,7 @@ fun MotivationCard() {
             horizontalAlignment = Alignment.CenterHorizontally
         ) {
             Text(
-                text = "“",
+                text = "\u201C",
                 fontSize = 40.sp,
                 color = Color.LightGray,
                 modifier = Modifier.align(Alignment.Start)
@@ -54,7 +58,7 @@ fun MotivationCard() {
                 IconButton(onClick = { currentQuote = QuotesProvider.getRandomQuote() }) {
                     Icon(
                         imageVector = Icons.Default.Refresh,
-                        contentDescription = "New Quote",
+                        contentDescription = Strings.newQuote,
                         tint = Color.Gray,
                         modifier = Modifier.size(20.dp)
                     )

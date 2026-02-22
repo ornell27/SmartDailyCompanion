@@ -10,6 +10,7 @@ import androidx.compose.runtime.*
 import androidx.compose.ui.Modifier
 import androidx.room.Room
 import com.example.myapplication.data.AppDatabase
+import com.example.myapplication.data.LanguageManager
 import com.example.myapplication.data.Note
 import com.example.myapplication.ui.screens.DashboardScreen
 import com.example.myapplication.ui.screens.EditNoteScreen
@@ -35,6 +36,8 @@ class MainActivity : ComponentActivity() {
             val systemInDark = isSystemInDarkTheme()
             var isDarkMode by remember { mutableStateOf(systemInDark) }
 
+            val currentLanguage by LanguageManager.currentLanguage
+
             MyApplicationTheme(darkTheme = isDarkMode) {
                 var currentScreen by remember { mutableStateOf("dashboard") }
                 var selectedNote by remember { mutableStateOf<Note?>(null) }
@@ -56,9 +59,22 @@ class MainActivity : ComponentActivity() {
                             onGoalsClick = { currentScreen = "goals" },
                             onMoodClick = { currentScreen = "mood" }
                         )
-                        "edit" -> EditNoteScreen(noteDao = noteDao, noteToEdit = selectedNote, onBack = { currentScreen = "dashboard" })
-                        "goals" -> GoalsScreen(goalDao = goalDao, onBack = { currentScreen = "dashboard" })
-                        "mood" -> MoodScreen(moodDao = moodDao, onBack = { currentScreen = "dashboard" })
+                        "edit" -> EditNoteScreen(
+                            noteDao = noteDao,
+                            noteToEdit = selectedNote,
+                            isDarkMode = isDarkMode,  // ✅ transmis
+                            onBack = { currentScreen = "dashboard" }
+                        )
+                        "goals" -> GoalsScreen(
+                            goalDao = goalDao,
+                            isDarkMode = isDarkMode,  // ✅ transmis
+                            onBack = { currentScreen = "dashboard" }
+                        )
+                        "mood" -> MoodScreen(
+                            moodDao = moodDao,
+                            isDarkMode = isDarkMode,  // ✅ transmis
+                            onBack = { currentScreen = "dashboard" }
+                        )
                     }
                 }
             }
